@@ -1,3 +1,18 @@
+#
+# Copyright 2021 Apollo Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 # Dockerfile for apollo-portal-server
 
 # Build with:
@@ -18,17 +33,6 @@ ADD . /apollo-portal-server/
 
 ENV APOLLO_PORTAL_SERVICE_NAME="service-apollo-portal-server.sre"
 
-ENV DATASOURCES_URL="jdbc:mysql://service-mysql-for-apollo.sre:3306/ApolloPortalDB?characterEncoding=utf8"
-ENV DATASOURCES_USERNAME="FillInCorrectUser"
-ENV DATASOURCES_PASSWORD="FillInCorrectPassword"
-
-ENV DEV_META_SERVICE_NAME="service-apollo-config-server-dev.sre"
-ENV TEST_ALPHA_META_SERVICE_NAME="service-apollo-config-server-test-alpha.sre"
-ENV TEST_BETA_META_SERVICE_NAME="service-apollo-config-server-test-beta.sre"
-ENV PROD_META_SERVICE_NAME="service-apollo-config-server-prod.sre"
-
 EXPOSE 8070
-
-ENTRYPOINT ["/apollo-portal-server/entrypoint.sh"]
 
 CMD ["/apollo-portal-server/scripts/startup-kubernetes.sh"]

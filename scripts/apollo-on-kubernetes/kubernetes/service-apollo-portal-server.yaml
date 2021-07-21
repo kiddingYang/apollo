@@ -1,4 +1,18 @@
-
+#
+# Copyright 2021 Apollo Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 ---
 # 为外部 mysql 服务设置 service
 kind: Service
@@ -24,19 +38,6 @@ metadata:
 subsets:
   - addresses:
       # 更改为你的 mysql addresses, 例如 1.1.1.1
-      # 其中 1.1.1.1、2.2.2.2、3.3.3.3 为你的 mysql 集群, 例如 MySQL-Galera-WSrep 或 TiDB
-      - ip: your-mysql-addresses
-    ports:
-      - protocol: TCP
-        port: 3306
-  - addresses:
-      # 更改为你的 mysql addresses, 例如 2.2.2.2
-      - ip: your-mysql-addresses
-    ports:
-      - protocol: TCP
-        port: 3306
-  - addresses:
-      # 更改为你的 mysql addresses, 例如 3.3.3.3
       - ip: your-mysql-addresses
     ports:
       - protocol: TCP
@@ -84,7 +85,7 @@ spec:
 
 ---
 kind: Deployment
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 metadata:
   namespace: sre
   name: deployment-apollo-portal-server
@@ -106,8 +107,18 @@ spec:
       labels:
         app: pod-apollo-portal-server
     spec:
-      nodeSelector:
-        node: "apollo"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - pod-apollo-portal-server
+              topologyKey: kubernetes.io/hostname
       
       volumes:
         - name: volume-configmap-apollo-portal-server

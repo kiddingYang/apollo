@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Apollo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.ctrip.framework.apollo.configservice;
 
 import com.ctrip.framework.apollo.biz.config.BizConfig;
@@ -6,10 +22,13 @@ import com.ctrip.framework.apollo.biz.message.ReleaseMessageScanner;
 import com.ctrip.framework.apollo.configservice.controller.ConfigFileController;
 import com.ctrip.framework.apollo.configservice.controller.NotificationController;
 import com.ctrip.framework.apollo.configservice.controller.NotificationControllerV2;
+import com.ctrip.framework.apollo.configservice.filter.ClientAuthenticationFilter;
 import com.ctrip.framework.apollo.configservice.service.ReleaseMessageServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigService;
 import com.ctrip.framework.apollo.configservice.service.config.ConfigServiceWithCache;
 import com.ctrip.framework.apollo.configservice.service.config.DefaultConfigService;
+import com.ctrip.framework.apollo.configservice.util.AccessKeyUtil;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
@@ -42,6 +61,18 @@ public class ConfigServiceAutoConfiguration {
   @Bean
   public static NoOpPasswordEncoder passwordEncoder() {
     return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
+  }
+
+  @Bean
+  public FilterRegistrationBean clientAuthenticationFilter(AccessKeyUtil accessKeyUtil) {
+    FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+
+    filterRegistrationBean.setFilter(new ClientAuthenticationFilter(accessKeyUtil));
+    filterRegistrationBean.addUrlPatterns("/configs/*");
+    filterRegistrationBean.addUrlPatterns("/configfiles/*");
+    filterRegistrationBean.addUrlPatterns("/notifications/v2/*");
+
+    return filterRegistrationBean;
   }
 
   @Configuration

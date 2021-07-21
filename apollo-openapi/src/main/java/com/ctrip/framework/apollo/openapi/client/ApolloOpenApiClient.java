@@ -1,12 +1,31 @@
+/*
+ * Copyright 2021 Apollo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.ctrip.framework.apollo.openapi.client;
 
 import com.ctrip.framework.apollo.openapi.client.constant.ApolloOpenApiConstants;
 import com.ctrip.framework.apollo.openapi.client.service.AppOpenApiService;
+import com.ctrip.framework.apollo.openapi.client.service.ClusterOpenApiService;
 import com.ctrip.framework.apollo.openapi.client.service.ItemOpenApiService;
 import com.ctrip.framework.apollo.openapi.client.service.NamespaceOpenApiService;
 import com.ctrip.framework.apollo.openapi.client.service.ReleaseOpenApiService;
 import com.ctrip.framework.apollo.openapi.dto.NamespaceReleaseDTO;
+import com.ctrip.framework.apollo.openapi.dto.OpenAppDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenAppNamespaceDTO;
+import com.ctrip.framework.apollo.openapi.dto.OpenClusterDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenEnvClusterDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenItemDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenNamespaceDTO;
@@ -17,16 +36,17 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.util.List;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 
+import java.util.List;
+
 /**
  * This class contains collections of methods to access Apollo Open Api.
  * <br />
- * For more information, please refer <a href="https://github.com/ctripcorp/apollo/wiki/">Apollo Wiki</a>.
+ * For more information, please refer <a href="https://www.apolloconfig.com/#/zh/usage/apollo-open-api-platform">Apollo Wiki</a>.
  *
  */
 public class ApolloOpenApiClient {
@@ -36,19 +56,21 @@ public class ApolloOpenApiClient {
   private final ItemOpenApiService itemService;
   private final ReleaseOpenApiService releaseService;
   private final NamespaceOpenApiService namespaceService;
+  private final ClusterOpenApiService clusterService;
+  private static final Gson GSON = new GsonBuilder().setDateFormat(ApolloOpenApiConstants.JSON_DATE_FORMAT).create();
 
   private ApolloOpenApiClient(String portalUrl, String token, RequestConfig requestConfig) {
     this.portalUrl = portalUrl;
     this.token = token;
     CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
         .setDefaultHeaders(Lists.newArrayList(new BasicHeader("Authorization", token))).build();
-    Gson gson = new GsonBuilder().setDateFormat(ApolloOpenApiConstants.JSON_DATE_FORMAT).create();
 
     String baseUrl = this.portalUrl + ApolloOpenApiConstants.OPEN_API_V1_PREFIX;
-    appService = new AppOpenApiService(client, baseUrl, gson);
-    namespaceService = new NamespaceOpenApiService(client, baseUrl, gson);
-    itemService = new ItemOpenApiService(client, baseUrl, gson);
-    releaseService = new ReleaseOpenApiService(client, baseUrl, gson);
+    appService = new AppOpenApiService(client, baseUrl, GSON);
+    clusterService = new ClusterOpenApiService(client, baseUrl, GSON);
+    namespaceService = new NamespaceOpenApiService(client, baseUrl, GSON);
+    itemService = new ItemOpenApiService(client, baseUrl, GSON);
+    releaseService = new ReleaseOpenApiService(client, baseUrl, GSON);
   }
 
   /**
@@ -59,10 +81,51 @@ public class ApolloOpenApiClient {
   }
 
   /**
+   * Get all App information
+   */
+  public List<OpenAppDTO> getAllApps() {
+    return appService.getAppsInfo(null);
+  }
+
+  /**
+   * Get applications which can be operated by current open api client.
+   *
+   * @return app's information
+   */
+  public List<OpenAppDTO> getAuthorizedApps() {
+    return this.appService.getAuthorizedApps();
+  }
+
+  /**
+   * Get App information by app ids
+   */
+  public List<OpenAppDTO> getAppsByIds(List<String> appIds) {
+    return appService.getAppsInfo(appIds);
+  }
+
+  /**
    * Get the namespaces
    */
   public List<OpenNamespaceDTO> getNamespaces(String appId, String env, String clusterName) {
     return namespaceService.getNamespaces(appId, env, clusterName);
+  }
+
+  /**
+   * Get the cluster
+   *
+   * @since 1.5.0
+   */
+  public OpenClusterDTO getCluster(String appId, String env, String clusterName) {
+    return clusterService.getCluster(appId, env, clusterName);
+  }
+
+  /**
+   * Create the cluster
+   *
+   * @since 1.5.0
+   */
+  public OpenClusterDTO createCluster(String env, OpenClusterDTO openClusterDTO) {
+    return clusterService.createCluster(env, openClusterDTO);
   }
 
   /**
@@ -144,6 +207,16 @@ public class ApolloOpenApiClient {
    */
   public OpenReleaseDTO getLatestActiveRelease(String appId, String env, String clusterName, String namespaceName) {
     return releaseService.getLatestActiveRelease(appId, env, clusterName, namespaceName);
+  }
+
+  /**
+   * Rollback the release
+   *
+   * @param operator the user who rollbacks the release
+   * @since 1.5.0
+   */
+  public void rollbackRelease(String env, long releaseId, String operator) {
+    releaseService.rollbackRelease(env, releaseId, operator);
   }
 
 

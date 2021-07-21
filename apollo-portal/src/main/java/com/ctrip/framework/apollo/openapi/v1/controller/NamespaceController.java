@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Apollo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.ctrip.framework.apollo.openapi.v1.controller;
 
 
@@ -8,7 +24,7 @@ import com.ctrip.framework.apollo.common.exception.BadRequestException;
 import com.ctrip.framework.apollo.common.utils.InputValidator;
 import com.ctrip.framework.apollo.common.utils.RequestPrecondition;
 import com.ctrip.framework.apollo.core.enums.ConfigFileFormat;
-import com.ctrip.framework.apollo.core.enums.Env;
+import com.ctrip.framework.apollo.portal.environment.Env;
 import com.ctrip.framework.apollo.openapi.dto.OpenAppNamespaceDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenNamespaceDTO;
 import com.ctrip.framework.apollo.openapi.dto.OpenNamespaceLockDTO;
@@ -68,7 +84,7 @@ public class NamespaceController {
                                                appNamespaceDTO.getFormat(), appNamespaceDTO.getDataChangeCreatedBy());
 
     if (!InputValidator.isValidAppNamespace(appNamespaceDTO.getName())) {
-      throw new BadRequestException(String.format("Namespace格式错误: %s",
+      throw new BadRequestException(String.format("Invalid Namespace format: %s",
                                                   InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + " & "
                                                   + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));
     }
@@ -96,14 +112,14 @@ public class NamespaceController {
 
     return OpenApiBeanUtils
         .batchTransformFromNamespaceBOs(namespaceService.findNamespaceBOs(appId, Env
-            .fromString(env), clusterName));
+            .valueOf(env), clusterName));
   }
 
   @GetMapping(value = "/openapi/v1/envs/{env}/apps/{appId}/clusters/{clusterName}/namespaces/{namespaceName:.+}")
   public OpenNamespaceDTO loadNamespace(@PathVariable String appId, @PathVariable String env,
                                         @PathVariable String clusterName, @PathVariable String
                                             namespaceName) {
-    NamespaceBO namespaceBO = namespaceService.loadNamespaceBO(appId, Env.fromString
+    NamespaceBO namespaceBO = namespaceService.loadNamespaceBO(appId, Env.valueOf
         (env), clusterName, namespaceName);
     if (namespaceBO == null) {
       return null;
@@ -117,9 +133,9 @@ public class NamespaceController {
                                                    String namespaceName) {
 
     NamespaceDTO namespace = namespaceService.loadNamespaceBaseInfo(appId, Env
-        .fromString(env), clusterName, namespaceName);
+        .valueOf(env), clusterName, namespaceName);
     NamespaceLockDTO lockDTO = namespaceLockService.getNamespaceLock(appId, Env
-        .fromString(env), clusterName, namespaceName);
+        .valueOf(env), clusterName, namespaceName);
     return OpenApiBeanUtils.transformFromNamespaceLockDTO(namespace.getNamespaceName(), lockDTO);
   }
 
